@@ -129,6 +129,31 @@ class Plugin {
 
 		// Инициализация батч-процессора
 		new Batch_Processor();
+
+		// Кнопка партнерской ссылки на фронтенде
+		add_filter('the_content', [$this, 'add_affiliate_button']);
+	}
+
+	/**
+	 * Добавление кнопки партнерской ссылки
+	 */
+	public function add_affiliate_button(string $content): string {
+		if (!is_singular('zhsh_litres_book')) {
+			return $content;
+		}
+
+		$book_url = get_post_meta(get_the_ID(), 'zhsh_litres_url', true);
+
+		if (empty($book_url)) {
+			return $content;
+		}
+
+		$button = sprintf(
+			'<div class="wp-block-buttons is-layout-flex wp-block-buttons-is-layout-flex"><div class="wp-block-button"><a href="%s" class="wp-block-button__link wp-element-button" target="_blank" rel="nofollow noopener">Купить на ЛитРес</a></div></div>',
+			esc_url($book_url)
+		);
+
+		return $content . $button;
 	}
 
 	/**
