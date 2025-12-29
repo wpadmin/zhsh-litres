@@ -112,19 +112,29 @@ class Batch_Processor {
 	}
 
 	private function import_books_batch(array $books): int {
+		global $wpdb;
 		$imported = 0;
 
-		foreach ($books as $book) {
-			// Проверяем существование книги
-			$existing_id = get_posts([
-				'post_type' => 'zhsh_litres_book',
-				'meta_key' => 'zhsh_litres_book_id',
-				'meta_value' => $book['id'],
-				'posts_per_page' => 1,
-				'fields' => 'ids',
-			]);
+		// Кэшируем существующие ID книг (1 запрос вместо N)
+		$book_ids = array_column($books, 'id');
+		$placeholders = implode(',', array_fill(0, count($book_ids), '%s'));
+		$existing_books = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT meta_value FROM {$wpdb->postmeta}
+				WHERE meta_key = 'zhsh_litres_book_id'
+				AND meta_value IN ($placeholders)",
+				...$book_ids
+			)
+		);
+		$existing_book_ids = array_flip($existing_books);
 
-			if (!empty($existing_id)) {
+		// Кэшируем термины жанров и авторов
+		$genre_cache = [];
+		$author_cache = [];
+
+		foreach ($books as $book) {
+			// Проверяем существование книги через кэш
+			if (isset($existing_book_ids[$book['id']])) {
 				continue;
 			}
 
@@ -147,29 +157,39 @@ class Batch_Processor {
 			add_post_meta($post_id, 'zhsh_litres_url', $book['url'], true);
 			add_post_meta($post_id, 'zhsh_litres_image', $book['image'], true);
 
-			// Добавляем жанр
+			// Добавляем жанр (с кэшированием)
 			if (!empty($book['category'])) {
-				$term = get_term_by('name', $book['category'], 'zhsh_litres_genre');
-				if (!$term) {
-					$term_data = wp_insert_term($book['category'], 'zhsh_litres_genre');
-					if (!is_wp_error($term_data)) {
-						wp_set_object_terms($post_id, [$term_data['term_id']], 'zhsh_litres_genre');
+				if (!isset($genre_cache[$book['category']])) {
+					$term = get_term_by('name', $book['category'], 'zhsh_litres_genre');
+					if (!$term) {
+						$term_data = wp_insert_term($book['category'], 'zhsh_litres_genre');
+						if (!is_wp_error($term_data)) {
+							$genre_cache[$book['category']] = $term_data['term_id'];
+						}
+					} else {
+						$genre_cache[$book['category']] = $term->term_id;
 					}
-				} else {
-					wp_set_object_terms($post_id, [$term->term_id], 'zhsh_litres_genre');
+				}
+				if (isset($genre_cache[$book['category']])) {
+					wp_set_object_terms($post_id, [$genre_cache[$book['category']]], 'zhsh_litres_genre');
 				}
 			}
 
-			// Добавляем автора
+			// Добавляем автора (с кэшированием)
 			if (!empty($book['author'])) {
-				$term = get_term_by('name', $book['author'], 'zhsh_litres_author');
-				if (!$term) {
-					$term_data = wp_insert_term($book['author'], 'zhsh_litres_author');
-					if (!is_wp_error($term_data)) {
-						wp_set_object_terms($post_id, [$term_data['term_id']], 'zhsh_litres_author');
+				if (!isset($author_cache[$book['author']])) {
+					$term = get_term_by('name', $book['author'], 'zhsh_litres_author');
+					if (!$term) {
+						$term_data = wp_insert_term($book['author'], 'zhsh_litres_author');
+						if (!is_wp_error($term_data)) {
+							$author_cache[$book['author']] = $term_data['term_id'];
+						}
+					} else {
+						$author_cache[$book['author']] = $term->term_id;
 					}
-				} else {
-					wp_set_object_terms($post_id, [$term->term_id], 'zhsh_litres_author');
+				}
+				if (isset($author_cache[$book['author']])) {
+					wp_set_object_terms($post_id, [$author_cache[$book['author']]], 'zhsh_litres_author');
 				}
 			}
 
