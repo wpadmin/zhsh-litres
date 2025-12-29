@@ -1,0 +1,171 @@
+.zhsh-litres-import-wrapper {
+	max-width: 900px;
+}
+
+.zhsh-litres-step {
+	margin-bottom: 20px;
+	padding: 20px;
+}
+
+.zhsh-litres-message {
+	margin-top: 15px;
+	padding: 12px;
+	border-left: 4px solid #00a0d2;
+	background: #f0f6fc;
+	display: none;
+}
+
+.zhsh-litres-message.error {
+	border-left-color: #dc3232;
+	background: #fef7f7;
+}
+
+.zhsh-litres-message.success {
+	border-left-color: #46b450;
+	background: #f7fcf7;
+}
+
+.zhsh-litres-filter-section {
+	margin: 20px 0;
+	padding: 15px;
+	background: #f9f9f9;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+}
+
+.zhsh-litres-filter-section h3 {
+	margin-top: 0;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #ddd;
+}
+
+.zhsh-litres-filter-search {
+	margin-bottom: 15px;
+}
+
+.zhsh-litres-checkbox-list {
+	max-height: 300px;
+	overflow-y: auto;
+	padding: 10px;
+	background: #fff;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+}
+
+.zhsh-litres-checkbox-list label {
+	display: block;
+	padding: 5px 0;
+	margin: 0;
+}
+
+.zhsh-litres-checkbox-list label:hover {
+	background: #f0f0f0;
+}
+
+.zhsh-litres-checkbox-list input[type="checkbox"] {
+	margin-right: 8px;
+}
+
+.zhsh-litres-progress-wrapper {
+	margin: 20px 0;
+}
+
+.zhsh-litres-progress-bar {
+	width: 100%;
+	height: 30px;
+	background: #f0f0f0;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	overflow: hidden;
+	position: relative;
+}
+
+.zhsh-litres-progress-fill {
+	height: 100%;
+	background: linear-gradient(90deg, #2271b1, #135e96);
+	width: 0%;
+	transition: width 0.3s ease;
+	position: relative;
+}
+
+.zhsh-litres-progress-fill::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(255, 255, 255, 0.3),
+		transparent
+	);
+	animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(100%);
+	}
+}
+
+.zhsh-litres-progress-text {
+	margin-top: 10px;
+	font-size: 14px;
+	font-weight: 600;
+	text-align: center;
+}
+
+.zhsh-litres-progress-details {
+	margin-top: 8px;
+	text-align: center;
+	color: #666;
+	font-size: 13px;
+}
+
+#zhsh-litres-upload-form {
+	margin-top: 15px;
+}
+
+#zhsh-litres-file {
+	margin-right: 10px;
+}
+
+.zhsh-litres-loading {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	border: 2px solid #f3f3f3;
+	border-top: 2px solid #2271b1;
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
+	vertical-align: middle;
+	margin-left: 8px;
+}
+
+@keyframes spin {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes zhsh-litres-pulse {
+	0%, 100% {
+		opacity: 0.5;
+	}
+	50% {
+		opacity: 1;
+	}
+}
+
+button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
