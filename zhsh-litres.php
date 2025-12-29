@@ -132,6 +132,44 @@ class Plugin {
 
 		// Кнопка партнерской ссылки на фронтенде
 		add_filter('the_content', [$this, 'add_affiliate_button']);
+		add_action('the_content', [$this, 'add_book_meta'], 5);
+	}
+
+	/**
+	 * Добавление метаинформации о книге
+	 */
+	public function add_book_meta(string $content): string {
+		if (!is_singular('zhsh_litres_book')) {
+			return $content;
+		}
+
+		$meta_html = '';
+
+		// Жанры
+		$genres = get_the_terms(get_the_ID(), 'zhsh_litres_genre');
+		if ($genres && !is_wp_error($genres)) {
+			$genre_links = array_map(function($term) {
+				return sprintf('<a href="%s">%s</a>', get_term_link($term), esc_html($term->name));
+			}, $genres);
+			$meta_html .= '<p><strong>Жанр:</strong> ' . implode(', ', $genre_links) . '</p>';
+		}
+
+		// Авторы
+		$authors = get_the_terms(get_the_ID(), 'zhsh_litres_author');
+		if ($authors && !is_wp_error($authors)) {
+			$author_links = array_map(function($term) {
+				return sprintf('<a href="%s">%s</a>', get_term_link($term), esc_html($term->name));
+			}, $authors);
+			$meta_html .= '<p><strong>Автор:</strong> ' . implode(', ', $author_links) . '</p>';
+		}
+
+		// Цена
+		$price = get_post_meta(get_the_ID(), 'zhsh_litres_price', true);
+		if (!empty($price)) {
+			$meta_html .= '<p><strong>Цена:</strong> ' . esc_html($price) . ' ₽</p>';
+		}
+
+		return $meta_html . $content;
 	}
 
 	/**
