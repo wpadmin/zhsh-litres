@@ -12,7 +12,8 @@ if (!defined('ABSPATH')) {
  */
 class Parser {
 
-	public function extract_genres(string $file_path): array {
+	public function extract_genres(string $file_path, int $max_rows = 50000): array
+ {
 		$genres = [];
 		$handle = fopen($file_path, 'r');
 
@@ -28,20 +29,27 @@ class Parser {
 
 		fgetcsv($handle, 0, ';');
 
+		$row_count = 0;
 		while (false !== ($data = fgetcsv($handle, 0, ';'))) {
 			if (isset($data[3]) && !empty($data[3])) {
 				$category = trim($data[3]);
-				if ($category) {
+				if ($category && !isset($genres[$category])) {
 					$genres[$category] = $category;
 				}
+			}
+
+			$row_count++;
+			if ($row_count >= $max_rows) {
+				break;
 			}
 		}
 
 		fclose($handle);
-		return array_unique($genres);
+		return $genres;
 	}
 
-	public function extract_authors(string $file_path): array {
+	public function extract_authors(string $file_path, int $max_rows = 50000): array
+ {
 		$authors = [];
 		$handle = fopen($file_path, 'r');
 
@@ -57,17 +65,23 @@ class Parser {
 
 		fgetcsv($handle, 0, ';');
 
+		$row_count = 0;
 		while (false !== ($data = fgetcsv($handle, 0, ';'))) {
 			if (isset($data[12]) && !empty($data[12])) {
 				$author = trim($data[12]);
-				if ($author) {
+				if ($author && !isset($authors[$author])) {
 					$authors[$author] = $author;
 				}
+			}
+
+			$row_count++;
+			if ($row_count >= $max_rows) {
+				break;
 			}
 		}
 
 		fclose($handle);
-		return array_unique($authors);
+		return $authors;
 	}
 
 	public function parse_books(string $file_path, array $genres, array $authors, int $offset = 0, int $limit = 500): array {

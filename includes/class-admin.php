@@ -149,15 +149,29 @@ class Admin {
 			wp_send_json_error(['message' => 'Доступ запрещен']);
 		}
 
-		$file_path = get_option('zhsh_litres_uploaded_file');
+		$file_path = '';
+		if (isset($_POST['file_path'])) {
+			$file_path = sanitize_text_field($_POST['file_path']);
+		}
+
+		if (empty($file_path)) {
+			$file_path = get_option('zhsh_litres_uploaded_file');
+		}
 
 		if (!$file_path || !file_exists($file_path)) {
 			wp_send_json_error(['message' => 'Файл не найден']);
 		}
 
-		// Извлекаем жанры и авторов
-		$genres = $this->parser->extract_genres($file_path);
-		$authors = $this->parser->extract_authors($file_path);
+		// Сохраняем путь к файлу для дальнейшего использования
+		update_option('zhsh_litres_uploaded_file', $file_path);
+
+		// Увеличиваем лимиты для больших файлов
+		set_time_limit(300);
+		ini_set('memory_limit', '512M');
+
+		// Извлекаем жанры и авторов (первые 50000 строк)
+		$genres = $this->parser->extract_genres($file_path, 50000);
+		$authors = $this->parser->extract_authors($file_path, 50000);
 
 		// Сохраняем результаты сканирования
 		update_option('zhsh_litres_scanned_genres', $genres);
@@ -235,9 +249,19 @@ class Admin {
 			wp_send_json_error(['message' => 'Доступ запрещен']);
 		}
 
-		$this->processor->process_batch();
-		$status = $this->processor->get_import_status();
-		wp_send_json_success($status);
+		// Увеличиваем лимиты для обработки батча
+		set_time_limit(300);
+		ini_set('memory_limit', '512M');
+
+		try {
+			$this->processor->process_batch();
+			$status = $this->processor->get_import_status();
+			wp_send_json_success($status);
+		} catch (\Exception $e) {
+			wp_send_json_error([
+				'message' => 'Ошибка обработки: ' . $e->getMessage()
+			]);
+		}
 	}
 
 	/**

@@ -174,7 +174,15 @@ class Batch_Processor {
 			}
 
 			$imported++;
+
+			// Очищаем кэш WordPress каждые 100 книг
+			if ($imported % 100 === 0) {
+				wp_cache_flush();
+			}
 		}
+
+		// Финальная очистка кэша
+		wp_cache_flush();
 
 		return $imported;
 	}

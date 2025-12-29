@@ -190,6 +190,11 @@
 		handleScan: function(e) {
 			const $btn = $(e.target);
 
+			if (!this.selectedFilePath) {
+				this.showMessage('scan-message', 'Выберите файл для сканирования', 'error');
+				return;
+			}
+
 			this.hideMessage('scan-message');
 			this.addLoading($btn);
 
@@ -201,7 +206,8 @@
 				type: 'POST',
 				data: {
 					action: 'zhsh_litres_scan_file',
-					nonce: zhshLitres.nonce
+					nonce: zhshLitres.nonce,
+					file_path: this.selectedFilePath
 				},
 				success: (response) => {
 					this.removeLoading($btn);
