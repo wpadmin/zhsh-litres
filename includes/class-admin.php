@@ -27,6 +27,8 @@ class Admin {
 		add_action('wp_ajax_zhsh_litres_get_status', [$this, 'ajax_get_status']);
 		add_action('wp_ajax_zhsh_litres_stop_import', [$this, 'ajax_stop_import']);
 		add_action('wp_ajax_zhsh_litres_process_batch', [$this, 'ajax_process_batch']);
+		add_action('wp_ajax_zhsh_litres_get_files', [$this, 'ajax_get_files']);
+		add_action('wp_ajax_zhsh_litres_delete_file', [$this, 'ajax_delete_file']);
 		add_action('admin_notices', [$this, 'maybe_show_flush_notice']);
 	}
 
@@ -101,17 +103,6 @@ class Admin {
 
 		if (!current_user_can('manage_options')) {
 			wp_send_json_error(['message' => 'Доступ запрещен']);
-		}
-
-		// Проверяем файл litresru.csv в корне проекта
-		$project_file = ABSPATH . '../litresru.csv';
-
-		if (file_exists($project_file)) {
-			update_option('zhsh_litres_uploaded_file', $project_file);
-			wp_send_json_success([
-				'message'  => 'Используется файл litresru.csv из корня проекта',
-				'filePath' => $project_file,
-			]);
 		}
 
 		if (empty($_FILES['file'])) {
@@ -247,6 +238,81 @@ class Admin {
 		$this->processor->process_batch();
 		$status = $this->processor->get_import_status();
 		wp_send_json_success($status);
+	}
+
+	/**
+	 * AJAX: Получить список загруженных файлов
+	 */
+	public function ajax_get_files(): void
+	{
+		check_ajax_referer('zhsh_litres_nonce', 'nonce');
+
+		if (!current_user_can('manage_options')) {
+			wp_send_json_error(['message' => 'Доступ запрещен']);
+		}
+
+		$upload_dir = wp_upload_dir();
+		$target_dir = $upload_dir['basedir'] . '/zhsh-litres/';
+		$files      = [];
+
+		if (is_dir($target_dir)) {
+			$items = scandir($target_dir);
+			foreach ($items as $item) {
+				if ($item === '.' || $item === '..') {
+					continue;
+				}
+
+				$file_path = $target_dir . $item;
+				$extension = pathinfo($file_path, PATHINFO_EXTENSION);
+
+				if (is_file($file_path) && $extension === 'csv') {
+					$files[] = [
+						'name' => $item,
+						'path' => $file_path,
+						'date' => date('Y-m-d H:i:s', filemtime($file_path)),
+						'size' => size_format(filesize($file_path)),
+					];
+				}
+			}
+		}
+
+		usort($files, fn($a, $b) => strcmp($b['date'], $a['date']));
+
+		wp_send_json_success(['files' => $files]);
+	}
+
+	/**
+	 * AJAX: Удалить файл
+	 */
+	public function ajax_delete_file(): void {
+		check_ajax_referer('zhsh_litres_nonce', 'nonce');
+
+		if (!current_user_can('manage_options')) {
+			wp_send_json_error(['message' => 'Доступ запрещен']);
+		}
+
+		$file_path = $_POST['file_path'] ?? '';
+
+		if (empty($file_path)) {
+			wp_send_json_error(['message' => 'Путь к файлу не указан']);
+		}
+
+		$upload_dir = wp_upload_dir();
+		$target_dir = $upload_dir['basedir'] . '/zhsh-litres/';
+
+		if (strpos($file_path, $target_dir) !== 0) {
+			wp_send_json_error(['message' => 'Некорректный путь к файлу']);
+		}
+
+		if (!file_exists($file_path)) {
+			wp_send_json_error(['message' => 'Файл не найден']);
+		}
+
+		if (unlink($file_path)) {
+			wp_send_json_success(['message' => 'Файл удален']);
+		} else {
+			wp_send_json_error(['message' => 'Не удалось удалить файл']);
+		}
 	}
 
 	/**

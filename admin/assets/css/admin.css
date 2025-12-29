@@ -169,3 +169,53 @@ button:disabled {
 	opacity: 0.6;
 	cursor: not-allowed;
 }
+
+.zhsh-litres-file-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px;
+	margin-bottom: 8px;
+	background: #fff;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	transition: background 0.2s;
+}
+
+.zhsh-litres-file-item:hover {
+	background: #f9f9f9;
+	cursor: pointer;
+}
+
+.zhsh-litres-file-item.selected {
+	background: #f0f6fc;
+	border-color: #2271b1;
+}
+
+.zhsh-litres-file-info {
+	flex: 1;
+}
+
+.zhsh-litres-file-name {
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.zhsh-litres-file-meta {
+	font-size: 12px;
+	color: #666;
+}
+
+.zhsh-litres-file-delete {
+	color: #dc3232;
+	background: none;
+	border: none;
+	padding: 4px 8px;
+	cursor: pointer;
+	font-size: 16px;
+	line-height: 1;
+}
+
+.zhsh-litres-file-delete:hover {
+	color: #a00;
+}

@@ -13,8 +13,15 @@ if (!defined('ABSPATH')) {
 		<!-- Шаг 1: Загрузка файла -->
 		<div class="card zhsh-litres-step" id="step-upload">
 			<h2>Шаг 1: Загрузка файла каталога</h2>
-			<p>Загрузите CSV файл каталога из ЛитРес</p>
 
+			<!-- Загруженные файлы -->
+			<div id="uploaded-files-section" style="margin-bottom: 20px;">
+				<h3>Загруженные файлы</h3>
+				<div id="uploaded-files-list"></div>
+			</div>
+
+			<!-- Форма загрузки -->
+			<h3>Или загрузите новый файл</h3>
 			<form id="zhsh-litres-upload-form" method="post" enctype="multipart/form-data">
 				<input type="file" name="file" id="zhsh-litres-file" accept=".csv" required>
 				<button type="submit" class="button button-primary">

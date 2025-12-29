@@ -6,9 +6,11 @@
 			genres: {},
 			authors: {}
 		},
+		selectedFilePath: null,
 
 		init: function() {
 			this.bindEvents();
+			this.loadUploadedFiles();
 		},
 
 		bindEvents: function() {
@@ -18,6 +20,93 @@
 			$('#zhsh-litres-stop-btn').on('click', this.handleStop.bind(this));
 			$('#genre-search').on('keyup', this.filterList.bind(this, 'genre'));
 			$('#author-search').on('keyup', this.filterList.bind(this, 'author'));
+		},
+
+		loadUploadedFiles: function() {
+			$.ajax({
+				url: zhshLitres.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'zhsh_litres_get_files',
+					nonce: zhshLitres.nonce
+				},
+				success: (response) => {
+					if (response.success && response.data.files.length > 0) {
+						this.renderFilesList(response.data.files);
+					} else {
+						$('#uploaded-files-section').hide();
+					}
+				}
+			});
+		},
+
+		renderFilesList: function(files) {
+			const $list = $('#uploaded-files-list');
+			$list.empty();
+
+			files.forEach(file => {
+				const $item = $(`
+					<div class="zhsh-litres-file-item" data-path="${file.path}">
+						<div class="zhsh-litres-file-info">
+							<div class="zhsh-litres-file-name">${file.name}</div>
+							<div class="zhsh-litres-file-meta">${file.date} • ${file.size}</div>
+						</div>
+						<button class="zhsh-litres-file-delete" title="Удалить">×</button>
+					</div>
+				`);
+
+				$item.on('click', (e) => {
+					if (!$(e.target).hasClass('zhsh-litres-file-delete')) {
+						this.selectFile(file.path, $item);
+					}
+				});
+
+				$item.find('.zhsh-litres-file-delete').on('click', (e) => {
+					e.stopPropagation();
+					this.deleteFile(file.path, file.name);
+				});
+
+				$list.append($item);
+			});
+
+			$('#uploaded-files-section').show();
+		},
+
+		selectFile: function(filePath, $item) {
+			$('.zhsh-litres-file-item').removeClass('selected');
+			$item.addClass('selected');
+			this.selectedFilePath = filePath;
+
+			this.hideMessage('upload-message');
+			this.showMessage('upload-message', 'Файл выбран: ' + $item.find('.zhsh-litres-file-name').text(), 'success');
+
+			$('#step-select').show();
+		},
+
+		deleteFile: function(filePath, fileName) {
+			if (!confirm('Удалить файл "' + fileName + '"?')) {
+				return;
+			}
+
+			$.ajax({
+				url: zhshLitres.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'zhsh_litres_delete_file',
+					nonce: zhshLitres.nonce,
+					file_path: filePath
+				},
+				success: (response) => {
+					if (response.success) {
+						if (this.selectedFilePath === filePath) {
+							this.selectedFilePath = null;
+						}
+						this.loadUploadedFiles();
+					} else {
+						alert('Ошибка: ' + response.data.message);
+					}
+				}
+			});
 		},
 
 		showMessage: function(elementId, message, type) {
@@ -82,7 +171,10 @@
 
 					if (response.success) {
 						this.showMessage('upload-message', response.data.message, 'success');
+						this.selectedFilePath = response.data.filePath;
+						this.loadUploadedFiles();
 						$('#step-select').slideDown();
+						$form[0].reset();
 					} else {
 						this.showMessage('upload-message', response.data.message, 'error');
 					}
